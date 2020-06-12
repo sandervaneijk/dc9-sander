@@ -4,6 +4,7 @@ var diamondSprite;
 var hartSprite;
 var cursors;
 var walkFX;
+var deadFX;
 
 function preload() {
 	//https://opengameart.org/content/sky-backdrop // achtergrond
@@ -32,8 +33,10 @@ function preload() {
 	// het level gemaakt in tiled
 	this.load.tilemapTiledJSON('level', 'assets/level.json'); // het level gemaakt in tiled
 
-	//audio voor het lopen
+	//https://opengameart.org/content/grass-foot-step-sounds-yo-frankie audio voor het lopen
 	this.load.audio('walk', [ 'assets/walking1.mp3', 'assets/walking1.ogg' ]);
+	//https://opengameart.org/content/fire-evil-spell audio voor doodgaan aan de vuurballen
+	this.load.audio('dead', [ 'assets/fire1.mp3', 'assets/fire1.ogg' ]);
 }
 
 function create() {
@@ -43,7 +46,7 @@ function create() {
 	this.add.image(840, 490, 'sky');
 
 	//de character zelf
-	player = this.physics.add.sprite(100, 880, 'dude');
+	player = this.physics.add.sprite(840, 880, 'dude');
 
 	//https://phaser.io/examples/v3/view/physics/arcade/collision-direction voor de bewegende character tijdens het lopen
 	this.anims.create({
@@ -67,12 +70,34 @@ function create() {
 	//audio voor lopen
 	walkFX = this.sound.add('walk');
 
-	//voor de vuurballen(enemys)
+	//https://phaser.discourse.group/t/reset-position-on-falling-sprites/1575/6 voor de vuurballen(enemys)
 	fireSprite = this.physics.add.group({
-		key: 'fire',
-		repeat: 20,
-		setXY: { x: 100, y: 0, stepX: 200 }
+		runChildUpdate: true
 	});
+
+	fireSprite.createMultiple({
+		key: 'fire',
+		frame: Phaser.Utils.Array.NumberArray(0, 5),
+		randomFrame: true,
+		repeat: 1
+	});
+
+	fireSprite.children.iterate((child) => {
+		let y = Phaser.Math.Between(-200, -1500);
+		let x = Phaser.Math.Between(200, 1500);
+
+		child.setY(y);
+		child.setX(x);
+		child.setMaxVelocity(200);
+
+		child.update = function() {
+			if (this.y > 980) {
+				this.y = 0;
+			}
+		};
+	});
+	//de sound als een vuurbal de character raakt
+	fireFX = this.sound.add('dead');
 
 	// http://phaser.io/examples/v3/view/scalemanager/full-screen-game voor de diamanten(punten)
 	diamondSprite = this.physics.add.group({
@@ -85,10 +110,24 @@ function create() {
 		child.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
 	});
 
-	// http://phaser.io/examples/v3/view/scalemanager/full-screen-game voor de punten
-	this.scoreText = this.add.text(100, 150, 'score: 0', { fontSize: '32px', fill: '#000' });
+	// http://phaser.io/examples/v3/view/scalemanager/full-screen-game voor de punten/score
+	this.scoreText = this.add.text(85, 150, 'score: 0', { fontSize: '32px', fill: '#000' });
 
 	this.player = player;
+
+	//voor de extra levens
+	hartSprite = this.physics.add.group({
+		key: 'extralive',
+		repeat: 2,
+		setXY: { x: 400, y: 150, stepX: 400 }
+	});
+
+	//om de harten een bounce te geven bij de landing
+	hartSprite.children.iterate(function(child) {
+		child.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
+	});
+	// voor het aantal levens.
+	this.livesText = this.add.text(1440, 150, 'lives: 0', { fontSize: '32px', fill: '#000' });
 
 	//voor het level
 	var map = this.make.tilemap({
@@ -105,9 +144,11 @@ function create() {
 	platforms.setCollisionByProperty({ collidable: true });
 	this.physics.add.collider(player, platforms);
 	this.physics.add.collider(diamondSprite, platforms);
+	this.physics.add.collider(hartSprite, platforms);
 	this.physics.add.collider(player, fireSprite);
 
 	this.physics.add.overlap(player, diamondSprite, this.collectDiamonds, null, this);
+	this.physics.add.overlap(player, hartSprite, this.collectLives, null, this);
 
 	//voor damge tussen player en vuurbal
 	//this.physics.add.overlap(dudeSprite, fireSprite, doDamage, process, this);
@@ -134,13 +175,23 @@ function update() {
 	}
 }
 
+// de diamonds oppakken en de score: aanpassen
 /*collectDiamonds: function (player, diamonds)
 {
-	dudeSprite.disableBody(true, true);
+	diamondSprite.disableBody(true, true);
 
 	this.score += 10;
 	this.scoreText.setText('Score: ' + this.score);
 	console.log(collectDiamonds)
+}*/
+
+//de harten oppakken en de lives: aanpassen
+/*collectLives: function(){
+	hartSprite.disableBody(true, true);
+
+	this.live +=1;
+	this.livesText.setText('lives: ' + this.live);
+	console.log(collectLives)
 }*/
 
 var config = {
