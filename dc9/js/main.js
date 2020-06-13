@@ -36,10 +36,15 @@ function preload() {
 	//https://opengameart.org/content/grass-foot-step-sounds-yo-frankie audio voor het lopen
 	this.load.audio('walk', [ 'assets/walking1.mp3', 'assets/walking1.ogg' ]);
 	//https://opengameart.org/content/fire-evil-spell audio voor doodgaan aan de vuurballen
-	this.load.audio('dead', [ 'assets/fire1.mp3', 'assets/fire1.ogg' ]);
+
+	/////////////////////////// er is nog geen dead sound. Dus deze toevoegen om dit te fixen /////////////////////////////////////////////////////////////////////
+	// this.load.audio('dead', [ 'assets/fire1.mp3', 'assets/fire1.ogg' ]);
 }
 
 function create() {
+	this.score = 0;
+	this.lives = 3;
+
 	cursors = this.input.keyboard.createCursorKeys();
 
 	//voor de achtergrond
@@ -97,7 +102,10 @@ function create() {
 		};
 	});
 	//de sound als een vuurbal de character raakt
-	fireFX = this.sound.add('dead');
+
+	/////////////////////////// er is nog geen dead sound. Dus deze toevoegen om dit te fixen /////////////////////////////////////////////////////////////////////
+	// fireFX = this.sound.add('dead');core, { fontSize: '32px', fill: '#000' });
+
 
 	// http://phaser.io/examples/v3/view/scalemanager/full-screen-game voor de diamanten(punten)
 	diamondSprite = this.physics.add.group({
@@ -111,7 +119,7 @@ function create() {
 	});
 
 	// http://phaser.io/examples/v3/view/scalemanager/full-screen-game voor de punten/score
-	this.scoreText = this.add.text(85, 150, 'score: 0', { fontSize: '32px', fill: '#000' });
+	this.scoreText = this.add.text(85, 150, 'score: ' + this.score, { fontSize: '32px', fill: '#000' });
 
 	this.player = player;
 
@@ -127,7 +135,7 @@ function create() {
 		child.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
 	});
 	// voor het aantal levens.
-	this.livesText = this.add.text(1440, 150, 'lives: 0', { fontSize: '32px', fill: '#000' });
+	this.livesText = this.add.text(1440, 150, 'lives: ' + this.lives, { fontSize: '32px', fill: '#000' });
 
 	//voor het level
 	var map = this.make.tilemap({
@@ -147,8 +155,8 @@ function create() {
 	this.physics.add.collider(hartSprite, platforms);
 	this.physics.add.collider(player, fireSprite);
 
-	this.physics.add.overlap(player, diamondSprite, this.collectDiamonds, null, this);
-	this.physics.add.overlap(player, hartSprite, this.collectLives, null, this);
+	this.physics.add.overlap(player, diamondSprite, collectDiamond, null, this);
+	this.physics.add.overlap(player, hartSprite, collectLives, null, this);
 
 	//voor damge tussen player en vuurbal
 	//this.physics.add.overlap(dudeSprite, fireSprite, doDamage, process, this);
@@ -176,23 +184,22 @@ function update() {
 }
 
 // de diamonds oppakken en de score: aanpassen
-/*collectDiamonds: function (player, diamonds)
-{
+function collectDiamond (player, diamondSprite) {
 	diamondSprite.disableBody(true, true);
 
-	this.score += 10;
+	this.score += 10;	
 	this.scoreText.setText('Score: ' + this.score);
-	console.log(collectDiamonds)
-}*/
+	console.log('Diamond collected')
+}
 
 //de harten oppakken en de lives: aanpassen
-/*collectLives: function(){
+function collectLives(player, hartSprite) {
 	hartSprite.disableBody(true, true);
 
-	this.live +=1;
-	this.livesText.setText('lives: ' + this.live);
-	console.log(collectLives)
-}*/
+	this.lives +=1;
+	this.livesText.setText('lives: ' + this.lives);
+	console.log('Live collected')
+}
 
 var config = {
 	type: Phaser.AUTO,
